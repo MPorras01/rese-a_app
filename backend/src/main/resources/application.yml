@@ -1,0 +1,22 @@
+spring:
+  profiles:
+    active: dev
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+jwt:
+  secret: ${JWT_SECRET}
+
+otp:
+  jwt:
+    secret: ${OTP_JWT_SECRET}
