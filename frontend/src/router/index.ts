@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/views/HomeView.vue';
+import BusinessListView from '@/views/BusinessListView.vue';
 import LoginView from '@/views/LoginView.vue';
 import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
 import VerifyPhoneView from '@/views/VerifyPhoneView.vue';
+import BusinessDetailView from '@/views/BusinessDetailView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,7 +11,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: BusinessListView
     },
     {
       path: '/login',
@@ -26,6 +27,12 @@ const router = createRouter({
       path: '/verify-phone',
       name: 'verify-phone',
       component: VerifyPhoneView
+    },
+    {
+      path: '/businesses/:id',
+      name: 'business-detail',
+      component: BusinessDetailView,
+      props: true
     }
   ]
 });
