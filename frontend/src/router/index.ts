@@ -4,6 +4,7 @@ import LoginView from '@/views/LoginView.vue';
 import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
 import VerifyPhoneView from '@/views/VerifyPhoneView.vue';
 import BusinessDetailView from '@/views/BusinessDetailView.vue';
+import OwnerDashboardView from '@/views/OwnerDashboardView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -33,6 +34,11 @@ const router = createRouter({
       name: 'business-detail',
       component: BusinessDetailView,
       props: true
+    },
+    {
+      path: '/owner/dashboard',
+      name: 'owner-dashboard',
+      component: OwnerDashboardView
     }
   ]
 });

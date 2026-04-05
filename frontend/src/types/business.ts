@@ -23,6 +23,7 @@ export interface ProductDto {
   name: string;
   description: string | null;
   priceRange: string | null;
+  active?: boolean;
 }
 
 export interface ReviewDto {
