@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/LoginView.vue';
 import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
+import VerifyPhoneView from '@/views/VerifyPhoneView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/oauth2/callback',
       name: 'oauth2-callback',
       component: OAuthCallbackView
+    },
+    {
+      path: '/verify-phone',
+      name: 'verify-phone',
+      component: VerifyPhoneView
     }
   ]
 });
