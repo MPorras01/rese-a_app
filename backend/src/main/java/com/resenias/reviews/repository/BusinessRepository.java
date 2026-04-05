@@ -1,6 +1,7 @@
 package com.resenias.reviews.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -29,4 +30,21 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
            OR LOWER(COALESCE(b.category, '')) LIKE LOWER(CONCAT('%', :q, '%'))
         """)
     Page<Business> searchByQuery(@Param("q") String q, Pageable pageable);
+
+    @Query("""
+        SELECT b
+        FROM Business b
+        WHERE b.status = com.resenias.reviews.entity.Business.BusinessStatus.APPROVED
+          AND (:search IS NULL
+               OR LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(COALESCE(b.description, '')) LIKE LOWER(CONCAT('%', :search, '%')))
+          AND (:city IS NULL OR LOWER(COALESCE(b.city, '')) = LOWER(:city))
+          AND (:category IS NULL OR LOWER(COALESCE(b.category, '')) = LOWER(:category))
+        """)
+    Page<Business> findApprovedWithFilters(@Param("search") String search,
+                                           @Param("city") String city,
+                                           @Param("category") String category,
+                                           Pageable pageable);
+
+    Optional<Business> findFirstByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
 }
