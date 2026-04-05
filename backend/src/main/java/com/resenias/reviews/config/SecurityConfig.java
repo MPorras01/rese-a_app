@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.resenias.reviews.security.CustomOAuth2UserService;
 import com.resenias.reviews.security.JwtAuthenticationFilter;
 import com.resenias.reviews.security.OAuth2AuthenticationSuccessHandler;
 
@@ -34,6 +35,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   CustomOAuth2UserService customOAuth2UserService,
                                                    OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -50,6 +52,7 @@ public class SecurityConfig {
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(oauth2AuthenticationSuccessHandler)
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -79,11 +82,6 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
-    }
-
-    @Bean
-    public OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler() {
-        return new OAuth2AuthenticationSuccessHandler();
     }
 
     @Bean
