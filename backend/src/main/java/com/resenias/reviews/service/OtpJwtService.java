@@ -141,7 +141,7 @@ public class OtpJwtService {
         }
 
         if (blacklist.isUsed(jti)) {
-            throw new OtpInvalidException("OTP token already used");
+            throw new OtpInvalidException("Token ya utilizado");
         }
     }
 
