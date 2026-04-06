@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: resenias
+      POSTGRES_USER: resenias
+      POSTGRES_PASSWORD: resenias
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resenias -d resenias"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/resenias
+      DB_USERNAME: resenias
+      DB_PASSWORD: resenias
+      JWT_SECRET: ${JWT_SECRET}
+      OTP_JWT_SECRET: ${OTP_JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-placeholder-not-real}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-placeholder-not-real}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-placeholder-not-real}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-placeholder-not-real}
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

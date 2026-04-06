@@ -30,8 +30,14 @@ export interface ReviewDto {
   id: string;
   userId?: string;
   userName?: string;
+  userAvatar?: string | null;
+  businessId?: string;
+  productId?: string | null;
+  productName?: string | null;
   rating: number;
   body: string;
+  photos?: string[];
+  status?: string;
   createdAt: string;
 }
 

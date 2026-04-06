@@ -11,8 +11,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.resenias.reviews.service.BadRequestException;
+import com.resenias.reviews.service.BusinessNotFoundException;
+import com.resenias.reviews.service.DuplicateReviewException;
 import com.resenias.reviews.service.OtpExpiredException;
 import com.resenias.reviews.service.OtpInvalidException;
+import com.resenias.reviews.service.UnauthorizedException;
+import com.resenias.reviews.service.UserNotVerifiedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,9 +44,34 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateReviewException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateReview(DuplicateReviewException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UserNotVerifiedException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotVerified(UserNotVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BusinessNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleBusinessNotFound(BusinessNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(RuntimeException.class)

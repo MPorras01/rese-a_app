@@ -58,6 +58,9 @@ public class User {
     @Column(name = "oauth_subject")
     private String oauthSubject;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @Column(nullable = false)
     private String name;
 

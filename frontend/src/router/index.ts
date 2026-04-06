@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import BusinessListView from '@/views/BusinessListView.vue';
+import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/LoginView.vue';
 import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
 import VerifyPhoneView from '@/views/VerifyPhoneView.vue';
 import BusinessDetailView from '@/views/BusinessDetailView.vue';
 import OwnerDashboardView from '@/views/OwnerDashboardView.vue';
+import AdminDashboardView from '@/views/AdminDashboardView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +14,11 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      component: HomeView
+    },
+    {
+      path: '/businesses',
+      name: 'business-list',
       component: BusinessListView
     },
     {
@@ -39,6 +46,11 @@ const router = createRouter({
       path: '/owner/dashboard',
       name: 'owner-dashboard',
       component: OwnerDashboardView
+    },
+    {
+      path: '/admin/dashboard',
+      name: 'admin-dashboard',
+      component: AdminDashboardView
     }
   ]
 });

@@ -23,6 +23,10 @@ interface OtpVerifyResponse {
   token: string;
 }
 
+interface LoginResponse {
+  token: string;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = useLocalStorage<string | null>('token', null);
   const user = ref<User | null>(null);
@@ -46,11 +50,27 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function loginWithGoogle(): void {
-    window.location.href = '/api/oauth2/authorization/google';
+    window.location.href = '/oauth2/authorization/google';
   }
 
   function loginWithFacebook(): void {
-    window.location.href = '/api/oauth2/authorization/facebook';
+    window.location.href = '/oauth2/authorization/facebook';
+  }
+
+  async function loginWithPassword(email: string, password: string): Promise<void> {
+    loading.value = true;
+    try {
+      const response = await apiClient.post<LoginResponse>('/api/auth/login', {
+        email,
+        password
+      });
+
+      token.value = response.data.token;
+      await fetchMe();
+      await router.push('/');
+    } finally {
+      loading.value = false;
+    }
   }
 
   async function handleOAuthCallback(newToken: string): Promise<void> {
@@ -116,6 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
     isActive,
     isAdmin,
     initAuth,
+    loginWithPassword,
     loginWithGoogle,
     loginWithFacebook,
     handleOAuthCallback,

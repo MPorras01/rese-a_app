@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.resenias.reviews.dto.OtpRequestDto;
 import com.resenias.reviews.dto.OtpVerifyDto;
+import com.resenias.reviews.dto.AuthTokenDto;
+import com.resenias.reviews.dto.LoginRequestDto;
 import com.resenias.reviews.dto.UserDto;
 import com.resenias.reviews.entity.User;
 import com.resenias.reviews.security.JwtService;
 import com.resenias.reviews.security.UserPrincipal;
+import com.resenias.reviews.service.LocalAuthService;
 import com.resenias.reviews.service.OtpJwtService;
 import com.resenias.reviews.service.UserService;
 
@@ -30,11 +33,22 @@ public class AuthController {
     private final OtpJwtService otpService;
     private final UserService userService;
     private final JwtService jwtService;
+    private final LocalAuthService localAuthService;
 
-    public AuthController(OtpJwtService otpService, UserService userService, JwtService jwtService) {
+    public AuthController(OtpJwtService otpService,
+                          UserService userService,
+                          JwtService jwtService,
+                          LocalAuthService localAuthService) {
         this.otpService = otpService;
         this.userService = userService;
         this.jwtService = jwtService;
+        this.localAuthService = localAuthService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthTokenDto> login(@Valid @RequestBody LoginRequestDto body) {
+        String token = localAuthService.login(body.email(), body.password());
+        return ResponseEntity.ok(new AuthTokenDto(token));
     }
 
     @PostMapping("/otp/request")

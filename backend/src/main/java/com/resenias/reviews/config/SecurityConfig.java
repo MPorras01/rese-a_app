@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,6 +26,8 @@ import com.resenias.reviews.security.CustomOAuth2UserService;
 import com.resenias.reviews.security.JwtAuthenticationFilter;
 import com.resenias.reviews.security.JwtService;
 import com.resenias.reviews.security.OAuth2AuthenticationSuccessHandler;
+import com.resenias.reviews.repository.UserRepository;
+import com.resenias.reviews.security.UserPrincipal;
 
 @Configuration
 @EnableWebSecurity
@@ -46,6 +49,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/businesses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/otp/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
                 .requestMatchers("/api/upload/**").permitAll()
@@ -85,6 +89,13 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService,
                                                            UserDetailsService userDetailsService) {
         return new JwtAuthenticationFilter(jwtService, userDetailsService);
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(UserRepository userRepository) {
+        return username -> userRepository.findByEmail(username)
+            .map(UserPrincipal::new)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     @Bean

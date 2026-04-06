@@ -1,28 +1,84 @@
 <template>
-  <main class="page">
-    <section class="filters">
-      <input v-model="search" type="text" placeholder="Buscar negocio" />
+  <main class="business-list">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Descubre negocios</h1>
+      <p>Explora miles de opiniones auténticas sobre los mejores lugares.</p>
+    </div>
 
-      <select v-model="category">
-        <option value="">Todas las categorias</option>
-        <option v-for="item in categories" :key="item" :value="item">{{ item }}</option>
-      </select>
+    <!-- Filtros Section -->
+    <section class="filters-section">
+      <div class="filters-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            v-model="search" 
+            type="text" 
+            placeholder="Buscar por nombre..."
+            class="search-input"
+          />
+        </div>
 
-      <input v-model="city" type="text" placeholder="Ciudad" />
+        <select v-model="category" class="filter-select">
+          <option value="">Todas las categorías</option>
+          <option v-for="item in categories" :key="item" :value="item">{{ item }}</option>
+        </select>
+
+        <input 
+          v-model="city" 
+          type="text" 
+          placeholder="Ciudad..." 
+          class="filter-input"
+        />
+      </div>
     </section>
 
-    <section v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="n in 6" :key="n" class="skeleton" />
+    <!-- Loading State -->
+    <section v-if="loading" class="businesses-grid">
+      <div v-for="n in 6" :key="n" class="skeleton-card" />
     </section>
 
-    <section v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <BusinessCard v-for="business in businesses" :key="business.id" :business="business" />
+    <!-- Businesses Grid -->
+    <section v-else class="businesses-grid">
+      <BusinessCard 
+        v-for="business in businesses" 
+        :key="business.id" 
+        :business="business" 
+      />
     </section>
 
-    <footer class="pagination">
-      <button type="button" :disabled="loading || page <= 0" @click="prevPage">Anterior</button>
-      <span>Pagina {{ page + 1 }} de {{ totalPages }}</span>
-      <button type="button" :disabled="loading || page + 1 >= totalPages" @click="nextPage">Siguiente</button>
+    <!-- Empty State -->
+    <div v-if="!loading && businesses.length === 0" class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <h3>No hay negocios disponibles</h3>
+      <p>Intenta con otros filtros o categorías</p>
+    </div>
+
+    <!-- Pagination -->
+    <footer v-if="businesses.length > 0" class="pagination-section">
+      <button 
+        type="button" 
+        class="btn-pagination btn-pagination--prev"
+        :disabled="loading || page <= 0"
+        @click="prevPage"
+      >
+        ← Anterior
+      </button>
+      
+      <div class="pagination-info">
+        <span class="current-page">{{ page + 1 }}</span>
+        <span class="pagination-divider">/</span>
+        <span class="total-pages">{{ totalPages }}</span>
+      </div>
+
+      <button 
+        type="button" 
+        class="btn-pagination btn-pagination--next"
+        :disabled="loading || page + 1 >= totalPages"
+        @click="nextPage"
+      >
+        Siguiente →
+      </button>
     </footer>
   </main>
 </template>
@@ -86,101 +142,297 @@ watchEffect(async () => {
 function prevPage(): void {
   if (page.value > 0) {
     page.value -= 1;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
 function nextPage(): void {
   if (page.value + 1 < totalPages.value) {
     page.value += 1;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 </script>
 
 <style scoped>
-.page {
-  max-width: 1200px;
+:root {
+  --color-primary: #C56956;
+  --color-gold: #D4AF37;
+  --color-coral: #E8644A;
+  --color-cream: #F5F1E8;
+  --color-dark: #1A1410;
+  --color-text-light: #7A7470;
+}
+
+.business-list {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 1.2rem;
+  padding: 3rem 2rem;
+  min-height: 70vh;
+}
+
+/* Page Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: slide-down 0.6s ease-out;
+}
+
+.page-header h1 {
+  font-family: 'Georgia', serif;
+  font-size: 2.5rem;
+  color: var(--color-dark);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: var(--color-text-light);
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+/* Filters Section */
+.filters-section {
+  margin-bottom: 3rem;
+  animation: slide-up 0.6s ease-out;
+}
+
+.filters-container {
   display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
+  align-items: end;
 }
 
-.filters {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.6rem;
-}
-
-@media (min-width: 768px) {
-  .filters {
-    grid-template-columns: 1.8fr 1fr 1fr;
-  }
-}
-
-input,
-select {
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 0.7rem 0.9rem;
-  font-size: 0.95rem;
-}
-
-.grid {
-  display: grid;
-}
-
-.grid-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .sm\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .lg\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.skeleton {
-  height: 180px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #e2e8f0, #f1f5f9, #e2e8f0);
-  background-size: 200% 100%;
-  animation: shine 1.1s linear infinite;
-}
-
-.pagination {
+.search-box {
+  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 1rem;
 }
 
-button {
-  border: 0;
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
-  background: #0f172a;
-  color: #fff;
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input,
+.filter-select,
+.filter-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-gold);
+  border-radius: 0;
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--color-cream) 100%);
+  color: var(--color-dark);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+
+.search-input {
+  padding-left: 2.75rem;
+}
+
+.search-input:focus,
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(197, 105, 86, 0.1);
+  background: #fff;
+}
+
+.filter-input::placeholder {
+  color: var(--color-text-light);
+}
+
+.filter-select {
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.6;
+/* Grid */
+.businesses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  animation: fade-in 0.6s ease-out;
+}
+
+.skeleton-card {
+  height: 280px;
+  border-radius: 0;
+  background: linear-gradient(90deg, #E8E8E8, #F0F0F0, #E8E8E8);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  margin: 2rem 0;
+  grid-column: 1 / -1;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  font-family: 'Georgia', serif;
+  font-size: 1.5rem;
+  color: var(--color-dark);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* Pagination */
+.pagination-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  border-top: 2px solid var(--color-gold);
+  border-bottom: 2px solid var(--color-gold);
+  animation: slide-up 0.6s ease-out;
+}
+
+.btn-pagination {
+  background: var(--color-primary);
+  color: #fff;
+  border: 2px solid var(--color-primary);
+  border-radius: 0;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pagination:hover:not(:disabled) {
+  background: var(--color-coral);
+  border-color: var(--color-coral);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 105, 86, 0.2);
+}
+
+.btn-pagination:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-@keyframes shine {
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  color: var(--color-dark);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.pagination-divider {
+  color: var(--color-text-light);
+}
+
+.current-page {
+  color: var(--color-primary);
+}
+
+.total-pages {
+  color: var(--color-text-light);
+}
+
+/* Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
-    background-position: -200% 0;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .business-list {
+    padding: 2rem 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .page-header p {
+    font-size: 0.95rem;
+  }
+
+  .filters-container {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .businesses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .pagination-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-pagination {
+    width: 100%;
   }
 }
 </style>
