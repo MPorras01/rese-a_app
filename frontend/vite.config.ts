@@ -18,13 +18,22 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'ES2023',
-    minify: 'terser',
+    target: 'esnext',
+    minify: 'esbuild',
     sourcemap: process.env.VITE_ENVIRONMENT === 'production' ? false : true,
+    cssMinify: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['vue', 'vue-router', 'pinia', 'axios']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue') || id.includes('vue-router') || id.includes('pinia')) {
+              return 'vendor-vue';
+            }
+            if (id.includes('axios')) {
+              return 'vendor-http';
+            }
+            return 'vendor';
+          }
         }
       }
     }

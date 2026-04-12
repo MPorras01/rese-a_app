@@ -26,3 +26,8 @@ r2:
   secret-key: ${R2_SECRET_KEY:placeholder}
   bucket: ${R2_BUCKET:placeholder}
   public-url: ${R2_PUBLIC_URL:http://localhost:8080}
+
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  from-phone: ${TWILIO_FROM_PHONE:}
