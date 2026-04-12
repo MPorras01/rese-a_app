@@ -1,0 +1,28 @@
+app:
+  frontend-url: http://localhost:8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 16MB
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder-not-real}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder-not-real}
+            scope: openid,email,profile
+          facebook:
+            client-id: ${FACEBOOK_CLIENT_ID:placeholder-not-real}
+            client-secret: ${FACEBOOK_CLIENT_SECRET:placeholder-not-real}
+            scope: email,public_profile
+
+r2:
+  account-id: ${R2_ACCOUNT_ID:placeholder}
+  access-key: ${R2_ACCESS_KEY:placeholder}
+  secret-key: ${R2_SECRET_KEY:placeholder}
+  bucket: ${R2_BUCKET:placeholder}
+  public-url: ${R2_PUBLIC_URL:http://localhost:8080}

@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: resenias
+      POSTGRES_USER: resenias
+      POSTGRES_PASSWORD: resenias123
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resenias -d resenias"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://db:5432/resenias
+      DB_USERNAME: resenias
+      DB_PASSWORD: resenias123
+      # Secrets de desarrollo — cámbia en producción
+      JWT_SECRET: dev-local-jwt-secret-key-minimum-32-chars-here!!
+      OTP_JWT_SECRET: 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+      # OAuth2 — reemplaza con credenciales reales para que funcione Google/Facebook
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-placeholder-not-real}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-placeholder-not-real}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-placeholder-not-real}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-placeholder-not-real}
+      # Cloudflare R2 — reemplaza si usas subida de imágenes
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-placeholder}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY:-placeholder}
+      R2_SECRET_KEY: ${R2_SECRET_KEY:-placeholder}
+      R2_BUCKET: ${R2_BUCKET:-placeholder}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

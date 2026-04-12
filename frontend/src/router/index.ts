@@ -1,10 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import BusinessListView from '@/views/BusinessListView.vue';
-import LoginView from '@/views/LoginView.vue';
-import OAuthCallbackView from '@/views/OAuthCallbackView.vue';
-import VerifyPhoneView from '@/views/VerifyPhoneView.vue';
-import BusinessDetailView from '@/views/BusinessDetailView.vue';
-import OwnerDashboardView from '@/views/OwnerDashboardView.vue';
+
+import { useAuthStore } from '@/stores/auth';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,35 +8,96 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: BusinessListView
+      component: () => import('../views/HomeView.vue')
+    },
+    {
+      path: '/explore',
+      name: 'explore',
+      component: () => import('../views/BusinessListView.vue')
+    },
+    {
+      path: '/business/:id',
+      name: 'business-detail',
+      component: () => import('../views/BusinessDetailView.vue'),
+      props: true
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: () => import('../views/auth/LoginView.vue')
     },
     {
       path: '/oauth2/callback',
       name: 'oauth2-callback',
-      component: OAuthCallbackView
+      component: () => import('../views/auth/OAuthCallbackView.vue')
     },
     {
       path: '/verify-phone',
       name: 'verify-phone',
-      component: VerifyPhoneView
+      component: () => import('../views/auth/VerifyPhoneView.vue'),
+      meta: { requiresAuth: true }
     },
     {
-      path: '/businesses/:id',
-      name: 'business-detail',
-      component: BusinessDetailView,
-      props: true
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/ProfileView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/profile/reviews',
+      name: 'profile-reviews',
+      component: () => import('../views/MisResenasView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/owner/dashboard',
       name: 'owner-dashboard',
-      component: OwnerDashboardView
+      component: () => import('../views/owner/OwnerDashboardView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin',
+      name: 'admin-dashboard',
+      component: () => import('../views/admin/AdminDashboardView.vue'),
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ]
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ path: '/login', query: { redirect: to.fullPath } });
+    return;
+  }
+
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next('/');
+    return;
+  }
+
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    next('/');
+    return;
+  }
+
+  if (
+    authStore.isAuthenticated &&
+    authStore.user?.status !== 'ACTIVE' &&
+    to.path !== '/verify-phone' &&
+    to.path !== '/login' &&
+    to.path !== '/oauth2/callback'
+  ) {
+    next('/verify-phone');
+    return;
+  }
+
+  next();
 });
 
 export default router;

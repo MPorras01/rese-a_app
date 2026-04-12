@@ -180,7 +180,7 @@ public class BusinessService {
 
     private String normalize(String value) {
         if (value == null || value.isBlank()) {
-            return null;
+            return "";
         }
         return value.trim();
     }

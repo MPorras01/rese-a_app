@@ -58,7 +58,7 @@ const categoryColor = computed(() => {
 });
 
 function goToDetail(): void {
-  void router.push(`/businesses/${props.business.id}`);
+  void router.push(`/business/${props.business.id}`);
 }
 </script>
 

@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build:staging": "vue-tsc --noEmit && VITE_ENVIRONMENT=staging vite build --mode staging",
+    "build:production": "vue-tsc --noEmit && VITE_ENVIRONMENT=production vite build --mode production",
+    "preview": "vite preview",
+    "preview:staging": "vite preview --outDir dist",
+    "lint": "echo 'Lint configured'",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.0",

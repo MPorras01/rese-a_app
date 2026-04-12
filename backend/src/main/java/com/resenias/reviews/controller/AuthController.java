@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,10 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resenias.reviews.dto.LocalLoginDto;
 import com.resenias.reviews.dto.OtpRequestDto;
 import com.resenias.reviews.dto.OtpVerifyDto;
 import com.resenias.reviews.dto.UserDto;
 import com.resenias.reviews.entity.User;
+import com.resenias.reviews.repository.UserRepository;
 import com.resenias.reviews.security.JwtService;
 import com.resenias.reviews.security.UserPrincipal;
 import com.resenias.reviews.service.OtpJwtService;
@@ -30,11 +33,33 @@ public class AuthController {
     private final OtpJwtService otpService;
     private final UserService userService;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(OtpJwtService otpService, UserService userService, JwtService jwtService) {
+    public AuthController(OtpJwtService otpService,
+                          UserService userService,
+                          JwtService jwtService,
+                          UserRepository userRepository,
+                          PasswordEncoder passwordEncoder) {
         this.otpService = otpService;
         this.userService = userService;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LocalLoginDto body) {
+        User user = userRepository.findByEmail(body.email())
+            .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
+
+        String passwordHash = user.getPasswordHash();
+        if (passwordHash == null || passwordHash.isBlank() || !passwordEncoder.matches(body.password(), passwordHash)) {
+            throw new RuntimeException("Credenciales inválidas");
+        }
+
+        String token = jwtService.generateToken(user);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/otp/request")

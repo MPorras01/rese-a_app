@@ -23,6 +23,10 @@ interface OtpVerifyResponse {
   token: string;
 }
 
+interface LocalLoginResponse {
+  token: string;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = useLocalStorage<string | null>('token', null);
   const user = ref<User | null>(null);
@@ -57,6 +61,18 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken;
     await fetchMe();
     await router.push('/');
+  }
+
+  async function loginWithPassword(email: string, password: string): Promise<void> {
+    loading.value = true;
+    try {
+      const response = await apiClient.post<LocalLoginResponse>('/api/auth/login', { email, password });
+      token.value = response.data.token;
+      await fetchMe();
+      await router.push('/');
+    } finally {
+      loading.value = false;
+    }
   }
 
   async function fetchMe(): Promise<void> {
@@ -116,6 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
     isActive,
     isAdmin,
     initAuth,
+    loginWithPassword,
     loginWithGoogle,
     loginWithFacebook,
     handleOAuthCallback,
