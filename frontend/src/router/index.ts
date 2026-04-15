@@ -54,6 +54,7 @@ const router = createRouter({
     },
     { path: '/about', name: 'about', component: () => import('../views/AboutView.vue') },
     { path: '/contact', name: 'contact', component: () => import('../views/ContactView.vue') },
+    { path: '/map', name: 'map', component: () => import('../views/MapView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 });

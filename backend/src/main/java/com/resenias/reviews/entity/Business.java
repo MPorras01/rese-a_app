@@ -65,6 +65,12 @@ public class Business {
     @Column(name = "rejection_reason", columnDefinition = "text")
     private String rejectionReason;
 
+    /** Latitud (geocodificada con Nominatim/OpenStreetMap). */
+    private Double lat;
+
+    /** Longitud (geocodificada con Nominatim/OpenStreetMap). */
+    private Double lng;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

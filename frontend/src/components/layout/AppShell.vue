@@ -37,6 +37,11 @@
         <span class="nav-label">Explorar</span>
       </router-link>
 
+      <router-link to="/map" class="nav-item" :class="{ active: route.path === '/map' }">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-label">Mapa</span>
+      </router-link>
+
       <template v-if="auth.isAuthenticated">
         <router-link
           v-if="auth.isAdmin"
@@ -65,11 +70,6 @@
       </template>
 
       <template v-else>
-        <router-link to="/about" class="nav-item" :class="{ active: route.path === '/about' }">
-          <span class="nav-icon">ℹ️</span>
-          <span class="nav-label">Nosotros</span>
-        </router-link>
-
         <router-link to="/login" class="nav-item" :class="{ active: route.path === '/login' }">
           <span class="nav-icon">🔑</span>
           <span class="nav-label">Entrar</span>

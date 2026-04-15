@@ -82,6 +82,31 @@
 
       <!-- Info -->
       <div v-else class="tab-content info-list">
+        <!-- Mapa si tiene coordenadas -->
+        <div v-if="business.lat && business.lng" class="map-section">
+          <LeafletMap
+            :markers="[{
+              id: business.id,
+              lat: business.lat,
+              lng: business.lng,
+              title: business.name,
+              category: business.category,
+              rating: business.avgRating ?? 0
+            }]"
+            height="220px"
+            :zoom="16"
+            :interactive="true"
+          />
+          <a
+            :href="`https://www.openstreetmap.org/?mlat=${business.lat}&mlon=${business.lng}&zoom=16`"
+            target="_blank"
+            rel="noreferrer"
+            class="open-osm"
+          >
+            🗺️ Ver en OpenStreetMap →
+          </a>
+        </div>
+
         <a v-if="business.phone" :href="`tel:${business.phone}`" class="info-row">
           <span class="info-icon">📞</span>
           <div>
@@ -133,6 +158,7 @@ import apiClient from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
 import type { BusinessDto, ProductDto, ReviewDto, PageResponse } from '@/types/business';
 import ReviewCard from '@/components/ui/ReviewCard.vue';
+import LeafletMap from '@/components/ui/LeafletMap.vue';
 
 const props = defineProps<{ id: string }>();
 const router = useRouter();
@@ -374,6 +400,22 @@ function starsFor(rating: number): string {
 
 /* Info */
 .info-list { gap: 0; padding: 0; }
+
+.map-section {
+  display: grid;
+  gap: 0;
+}
+
+.open-osm {
+  display: block;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.82rem;
+  color: #1d4ed8;
+  text-decoration: none;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+  font-weight: 500;
+}
 
 .info-row {
   display: flex;
