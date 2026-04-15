@@ -1,19 +1,23 @@
 <template>
   <article class="card" @click="goToDetail">
-    <header class="header">
-      <h3>{{ business.name }}</h3>
-      <span class="badge" :style="{ backgroundColor: categoryColor }">{{ business.category }}</span>
-    </header>
+    <div class="card-body">
+      <div class="card-header">
+        <h3>{{ business.name }}</h3>
+        <span class="badge" :style="{ background: categoryColor }">{{ business.category }}</span>
+      </div>
 
-    <p class="city">{{ business.city || 'Ciudad no disponible' }}</p>
-
-    <div class="rating">
-      <span class="stars">{{ stars }}</span>
-      <span class="score">{{ avgRatingLabel }}</span>
-      <span class="reviews">({{ business.totalReviews ?? 0 }} reseñas)</span>
+      <p v-if="business.city" class="city">📍 {{ business.city }}</p>
+      <p class="description">{{ shortDescription }}</p>
     </div>
 
-    <p class="description">{{ shortDescription }}</p>
+    <div class="card-footer">
+      <div class="rating">
+        <span class="stars">{{ stars }}</span>
+        <strong>{{ avgRatingLabel }}</strong>
+        <span class="count">({{ business.totalReviews ?? 0 }})</span>
+      </div>
+      <span class="arrow">›</span>
+    </div>
   </article>
 </template>
 
@@ -22,39 +26,27 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import type { BusinessDto } from '@/types/business';
 
-const props = defineProps<{
-  business: BusinessDto;
-}>();
-
+const props = defineProps<{ business: BusinessDto }>();
 const router = useRouter();
 
 const shortDescription = computed(() => {
-  const text = props.business.description || 'Sin descripción.';
-  if (text.length <= 80) {
-    return text;
-  }
-  return `${text.slice(0, 80)}...`;
+  const t = props.business.description || 'Sin descripción.';
+  return t.length > 80 ? `${t.slice(0, 80)}...` : t;
 });
 
 const avg = computed(() => props.business.avgRating ?? 0);
-const avgRatingLabel = computed(() => (props.business.avgRating ?? 0).toFixed(1));
+const avgRatingLabel = computed(() => avg.value.toFixed(1));
 const stars = computed(() => {
-  const rounded = Math.round(avg.value);
-  return `${'★'.repeat(rounded)}${'☆'.repeat(5 - rounded)}`;
+  const r = Math.round(avg.value);
+  return '★'.repeat(r) + '☆'.repeat(5 - r);
 });
 
 const categoryColor = computed(() => {
-  const palette: Record<string, string> = {
-    Restaurante: '#fb923c',
-    Tienda: '#60a5fa',
-    Servicio: '#34d399',
-    Salud: '#f87171',
-    Belleza: '#f472b6',
-    Educacion: '#a78bfa',
-    Otro: '#94a3b8'
+  const p: Record<string, string> = {
+    Restaurante: '#fb923c', Tienda: '#60a5fa', Servicio: '#34d399',
+    Salud: '#f87171', Belleza: '#f472b6', Educacion: '#a78bfa', Otro: '#94a3b8'
   };
-
-  return palette[props.business.category] ?? '#94a3b8';
+  return p[props.business.category] ?? '#94a3b8';
 });
 
 function goToDetail(): void {
@@ -64,54 +56,77 @@ function goToDetail(): void {
 
 <style scoped>
 .card {
+  background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  background: #fff;
-  padding: 1rem;
-  display: grid;
-  gap: 0.7rem;
+  overflow: hidden;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: grid;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.15s;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+.card:active { box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+
+.card-body {
+  padding: 0.9rem 1rem 0.6rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
-.header {
+.card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 0.6rem;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 h3 {
   margin: 0;
-  font-size: 1.06rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .badge {
   color: #fff;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 999px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.city,
-.description,
-.rating {
+.city {
   margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.82rem;
   color: #475569;
+  line-height: 1.4;
 }
 
-.stars {
-  color: #f59e0b;
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid #f8fafc;
+  background: #fafafa;
 }
 
-.score,
-.reviews {
-  margin-left: 0.35rem;
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.82rem;
 }
+
+.stars { color: #f59e0b; }
+.count { color: #94a3b8; }
+.arrow { color: #94a3b8; font-size: 1.1rem; }
 </style>

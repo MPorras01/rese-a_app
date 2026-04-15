@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? ''
+  // Usar mismo origen evita desalineaciones entre Docker local, Vite dev y Vercel redirects.
+  baseURL: ''
 });
 
 apiClient.interceptors.request.use((config) => {

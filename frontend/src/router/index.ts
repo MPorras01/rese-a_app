@@ -1,20 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
-
 import { useAuthStore } from '@/stores/auth';
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: () => import('../views/HomeView.vue')
-    },
-    {
-      path: '/explore',
-      name: 'explore',
-      component: () => import('../views/BusinessListView.vue')
-    },
+    { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
+    { path: '/explore', name: 'explore', component: () => import('../views/BusinessListView.vue') },
     {
       path: '/business/:id',
       name: 'business-detail',
@@ -28,16 +20,8 @@ const router = createRouter({
       props: true,
       meta: { requiresAuth: true }
     },
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('../views/auth/LoginView.vue')
-    },
-    {
-      path: '/oauth2/callback',
-      name: 'oauth2-callback',
-      component: () => import('../views/auth/OAuthCallbackView.vue')
-    },
+    { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
+    { path: '/oauth2/callback', name: 'oauth2-callback', component: () => import('../views/auth/OAuthCallbackView.vue') },
     {
       path: '/verify-phone',
       name: 'verify-phone',
@@ -68,34 +52,33 @@ const router = createRouter({
       component: () => import('../views/admin/AdminDashboardView.vue'),
       meta: { requiresAdmin: true }
     },
-    {
-      path: '/:pathMatch(.*)*',
-      redirect: '/'
-    }
+    { path: '/about', name: 'about', component: () => import('../views/AboutView.vue') },
+    { path: '/contact', name: 'contact', component: () => import('../views/ContactView.vue') },
+    { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 });
 
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
+router.beforeEach((to, _from, next) => {
+  const auth = useAuthStore();
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
     next({ path: '/login', query: { redirect: to.fullPath } });
     return;
   }
 
-  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
     next('/');
     return;
   }
 
-  if (to.path === '/login' && authStore.isAuthenticated) {
+  if (to.path === '/login' && auth.isAuthenticated) {
     next('/');
     return;
   }
 
   if (
-    authStore.isAuthenticated &&
-    authStore.user?.status !== 'ACTIVE' &&
+    auth.isAuthenticated &&
+    auth.user?.status !== 'ACTIVE' &&
     to.path !== '/verify-phone' &&
     to.path !== '/login' &&
     to.path !== '/oauth2/callback'
