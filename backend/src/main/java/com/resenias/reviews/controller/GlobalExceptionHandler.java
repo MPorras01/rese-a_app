@@ -11,11 +11,23 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.resenias.reviews.service.DuplicateBusinessException;
+import com.resenias.reviews.service.DuplicateReviewException;
 import com.resenias.reviews.service.OtpExpiredException;
 import com.resenias.reviews.service.OtpInvalidException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DuplicateReviewException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateReview(DuplicateReviewException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateBusinessException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateBusiness(DuplicateBusinessException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
 
     @ExceptionHandler(OtpExpiredException.class)
     public ResponseEntity<Map<String, String>> handleOtpExpired(OtpExpiredException ex) {

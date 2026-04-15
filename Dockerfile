@@ -8,26 +8,24 @@ COPY frontend/package*.json ./
 RUN npm ci
 
 COPY frontend/ ./
-RUN npm run build && \
-    # Compress output
-    find dist -type f \( -name "*.js" -o -name "*.css" \) -exec gzip -9 {} \;
+RUN npm run build
 
 # ─── Stage 2: Build backend (Maven) ────────────────────────────────────────────
 FROM maven:3.9-eclipse-temurin-21-alpine AS backend-builder
 WORKDIR /build
 
-# Usar mount cache para Maven
-RUN --mount=type=cache,target=/root/.m2 echo "Cache enabled"
-
+# Pre-descargar dependencias con cache BuildKit (se reutiliza entre builds)
 COPY backend/pom.xml ./
-COPY backend/src ./src
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B dependency:go-offline -DskipFrontend=true -q
 
-# Inyectar el dist del frontend ya compilado en el classpath de Spring Boot
+# Copiar fuentes y frontend ya compilado
+COPY backend/src ./src
 COPY --from=frontend-builder /frontend/dist ./src/main/resources/static
 
-# Compilar el JAR omitiendo los pasos de frontend
-RUN mvn -B -DskipTests -DskipFrontend=true \
-    -Dmaven.repo.local=/root/.m2/repository package
+# Compilar el JAR usando el cache de dependencias
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -DskipTests -DskipFrontend=true package -q
 
 # ─── Stage 3: Runtime ──────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine

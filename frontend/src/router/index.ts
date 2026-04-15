@@ -22,6 +22,13 @@ const router = createRouter({
       props: true
     },
     {
+      path: '/business/:id/review/new',
+      name: 'write-review',
+      component: () => import('../views/WriteReviewView.vue'),
+      props: true,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/auth/LoginView.vue')

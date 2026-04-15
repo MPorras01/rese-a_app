@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,9 @@ import com.resenias.reviews.dto.BusinessUpdateDto;
 import com.resenias.reviews.security.UserPrincipal;
 import com.resenias.reviews.service.BusinessService;
 
+import jakarta.validation.Valid;
+
+@Validated
 @RestController
 @RequestMapping("/api/businesses")
 public class BusinessController {
@@ -65,7 +69,7 @@ public class BusinessController {
     @PostMapping
     public ResponseEntity<BusinessDto> createBusiness(
         @AuthenticationPrincipal UserPrincipal principal,
-        @RequestBody BusinessCreateDto dto) {
+        @Valid @RequestBody BusinessCreateDto dto) {
         if (principal == null) {
             throw new RuntimeException("Authenticated user required");
         }
@@ -78,7 +82,7 @@ public class BusinessController {
     public ResponseEntity<BusinessDto> updateBusiness(
         @PathVariable UUID id,
         @AuthenticationPrincipal UserPrincipal principal,
-        @RequestBody BusinessUpdateDto dto) {
+        @Valid @RequestBody BusinessUpdateDto dto) {
         if (principal == null) {
             throw new RuntimeException("Authenticated user required");
         }

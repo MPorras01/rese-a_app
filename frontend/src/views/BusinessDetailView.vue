@@ -136,7 +136,7 @@ async function loadMoreReviews(): Promise<void> {
 }
 
 function goToWriteReview(): void {
-  void router.push(`/businesses/${props.id}/review/new`);
+  void router.push(`/business/${props.id}/review/new`);
 }
 </script>
 
