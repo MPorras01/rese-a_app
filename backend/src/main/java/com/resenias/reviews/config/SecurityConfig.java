@@ -44,12 +44,30 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Recursos estáticos del SPA (frontend embebido en el JAR)
+                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**",
+                    "/favicon.ico", "/vite.svg",
+                    "/explore", "/business/**", "/login", "/oauth2/callback",
+                    "/verify-phone", "/profile", "/profile/**",
+                    "/owner/**", "/admin").permitAll()
+                // API pública (GET)
                 .requestMatchers(HttpMethod.GET, "/api/businesses/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/otp/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                // API de autenticación
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/otp/**").permitAll()
+                // API privada - crear/actualizar negocios y productos
+                .requestMatchers(HttpMethod.POST, "/api/businesses").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/businesses/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
+                // Uploads
                 .requestMatchers("/api/upload/**").permitAll()
+                // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2

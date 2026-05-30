@@ -17,8 +17,14 @@ const auth = useAuthStore();
 const message = ref('Validando autenticacion...');
 
 onMounted(async () => {
-  const token = route.query.token;
-  if (typeof token !== 'string' || !token) {
+  const queryToken = typeof route.query.token === 'string' ? route.query.token : null;
+  const hashValue = window.location.hash.startsWith('#')
+    ? window.location.hash.substring(1)
+    : window.location.hash;
+  const hashToken = new URLSearchParams(hashValue).get('token');
+  const token = queryToken || hashToken;
+
+  if (!token) {
     message.value = 'Token invalido.';
     await router.push('/login');
     return;

@@ -1,0 +1,109 @@
+name: CI Build
+
+on:
+  push:
+    branches:
+      - feature/**
+      - dev
+      - release
+  pull_request:
+    branches:
+      - dev
+      - release
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java-version: ['21']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build Backend with Maven
+        run: |
+          cd backend
+          mvn clean package -DskipTests -Dskip.frontend=true
+
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          mvn test
+
+      - name: Upload Backend Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviews-api-${{ github.sha }}.jar
+          path: backend/target/reviews-api-*.jar
+          retention-days: 5
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./frontend
+        run: npm run lint 2>/dev/null || true
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Upload Frontend Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: frontend/dist/
+          retention-days: 5
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (Backend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'backend'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

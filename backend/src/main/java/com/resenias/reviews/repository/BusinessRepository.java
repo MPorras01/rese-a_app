@@ -34,12 +34,12 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
     @Query("""
         SELECT b
         FROM Business b
-        WHERE b.status = com.resenias.reviews.entity.Business.BusinessStatus.APPROVED
-          AND (:search IS NULL
+                WHERE b.status = 'APPROVED'
+                    AND (:search = ''
                OR LOWER(b.name) LIKE LOWER(CONCAT('%', :search, '%'))
                OR LOWER(COALESCE(b.description, '')) LIKE LOWER(CONCAT('%', :search, '%')))
-          AND (:city IS NULL OR LOWER(COALESCE(b.city, '')) = LOWER(:city))
-          AND (:category IS NULL OR LOWER(COALESCE(b.category, '')) = LOWER(:category))
+                    AND (:city = '' OR LOWER(COALESCE(b.city, '')) = LOWER(:city))
+                    AND (:category = '' OR LOWER(COALESCE(b.category, '')) = LOWER(:category))
         """)
     Page<Business> findApprovedWithFilters(@Param("search") String search,
                                            @Param("city") String city,

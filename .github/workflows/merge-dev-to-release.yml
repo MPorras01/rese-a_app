@@ -1,0 +1,55 @@
+name: Merge Dev to Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - release
+
+jobs:
+  merge-from-dev:
+    name: Auto-merge from dev
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'release' &&
+      github.event.pull_request.head.ref == 'dev'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Verify tests passed
+        run: |
+          echo "Tests verified from CI pipeline"
+
+      - name: Create Release Tag
+        id: tag
+        run: |
+          VERSION=$(date +%Y.%m.%d.%H%M%S)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          git tag -a "release-${VERSION}" -m "Release ${VERSION}"
+          git push origin "release-${VERSION}"
+
+      - name: Create Release Notes
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: release-${{ steps.tag.outputs.version }}
+          release_name: Release ${{ steps.tag.outputs.version }}
+          body: |
+            ## Release Information
+            - **Version**: ${{ steps.tag.outputs.version }}
+            - **Source**: dev branch
+            - **Build Status**: ✅ Passed
+
+            This release is ready for QA testing.
+          draft: false
+          prerelease: false

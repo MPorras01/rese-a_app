@@ -44,23 +44,33 @@ public class OtpJwtService {
     private final Environment environment;
     private final BCryptPasswordEncoder encoder;
     private final SecureRandom random;
+    private final SmsService smsService;
 
     public OtpJwtService(@Value("${otp.jwt.secret}") String secretHex,
                          OtpBlacklistService blacklist,
-                         Environment environment) {
+                         Environment environment,
+                         SmsService smsService) {
         this.aesKey = deriveAesKey(secretHex);
         this.blacklist = blacklist;
         this.environment = environment;
         this.encoder = new BCryptPasswordEncoder(10);
         this.random = new SecureRandom();
+        this.smsService = smsService;
     }
 
     public String generateOtpToken(String phone) {
         try {
             int code = random.nextInt(900_000) + 100_000;
-            String hash = encoder.encode(String.valueOf(code));
+            String codeStr = String.valueOf(code);
+            String hash = encoder.encode(codeStr);
             Instant now = Instant.now();
             String jti = UUID.randomUUID().toString();
+
+            // Send OTP via SMS
+            boolean smsSent = smsService.sendOtpCode(phone, codeStr);
+            if (!smsSent) {
+                log.warn("⚠️ SMS no pudo ser enviado para {}, pero continuando con el flujo", phone);
+            }
 
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject(phone)
@@ -79,10 +89,6 @@ public class OtpJwtService {
                 .build();
             JWEObject jweObject = new JWEObject(jweHeader, new Payload(signedJWT));
             jweObject.encrypt(new AESEncrypter(aesKey.getEncoded()));
-
-            if (environment.acceptsProfiles(Profiles.of("dev"))) {
-                log.debug("OTP {} -> {}", phone, code);
-            }
 
             return jweObject.serialize();
         } catch (JOSEException ex) {
