@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,7 +53,7 @@ public class ProductController {
         @RequestParam UUID businessId,
         @RequestBody ProductCreateRequest request) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         ProductSummaryDto created = productService.createProduct(
@@ -72,7 +73,7 @@ public class ProductController {
         @AuthenticationPrincipal UserPrincipal principal,
         @RequestBody ProductUpdateRequest request) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         ProductSummaryDto updated = productService.toggleProduct(id, principal.getId(), request.active());

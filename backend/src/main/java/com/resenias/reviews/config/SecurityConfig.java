@@ -63,11 +63,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/businesses/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
-                // Reseñas - crear y eliminar requieren autenticación
-                .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
-                // Perfil de usuario
-                .requestMatchers(HttpMethod.PUT, "/api/users/me/profile").authenticated()
                 // Uploads
                 .requestMatchers("/api/upload/**").permitAll()
                 // Admin endpoints

@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,9 +24,6 @@ import com.resenias.reviews.dto.BusinessUpdateDto;
 import com.resenias.reviews.security.UserPrincipal;
 import com.resenias.reviews.service.BusinessService;
 
-import jakarta.validation.Valid;
-
-@Validated
 @RestController
 @RequestMapping("/api/businesses")
 public class BusinessController {
@@ -58,7 +55,7 @@ public class BusinessController {
     @GetMapping("/me")
     public ResponseEntity<BusinessDto> getMyBusiness(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         return businessService.getMyBusiness(principal.getId())
@@ -69,9 +66,9 @@ public class BusinessController {
     @PostMapping
     public ResponseEntity<BusinessDto> createBusiness(
         @AuthenticationPrincipal UserPrincipal principal,
-        @Valid @RequestBody BusinessCreateDto dto) {
+        @RequestBody BusinessCreateDto dto) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         BusinessDto created = businessService.createBusiness(principal.getId(), dto);
@@ -82,9 +79,9 @@ public class BusinessController {
     public ResponseEntity<BusinessDto> updateBusiness(
         @PathVariable UUID id,
         @AuthenticationPrincipal UserPrincipal principal,
-        @Valid @RequestBody BusinessUpdateDto dto) {
+        @RequestBody BusinessUpdateDto dto) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         BusinessDto updated = businessService.updateBusiness(id, principal.getId(), dto);

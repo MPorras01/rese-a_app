@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.resenias.reviews.service.DuplicateBusinessException;
 import com.resenias.reviews.service.DuplicateReviewException;
@@ -54,6 +55,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        String reason = ex.getReason() == null || ex.getReason().isBlank() ? "Solicitud inválida" : ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason));
     }
 
     @ExceptionHandler(RuntimeException.class)

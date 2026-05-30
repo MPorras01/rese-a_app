@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,8 +28,10 @@ import com.resenias.reviews.service.OtpJwtService;
 import com.resenias.reviews.service.UserService;
 import com.resenias.reviews.service.OtpExpiredException;
 import com.resenias.reviews.service.OtpInvalidException;
+import com.resenias.reviews.service.RequestRateLimiter;
 
 import jakarta.validation.Valid;
+import java.time.Duration;
 
 @Validated
 @RestController
@@ -42,33 +45,42 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RequestRateLimiter requestRateLimiter;
 
     public AuthController(OtpJwtService otpService,
                           UserService userService,
                           JwtService jwtService,
                           UserRepository userRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          RequestRateLimiter requestRateLimiter) {
         this.otpService = otpService;
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.requestRateLimiter = requestRateLimiter;
     }
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LocalLoginDto body) {
         log.info("🔐 Login attempt para: {}", body.email());
+
+        String emailKey = body.email() == null ? "" : body.email().trim().toLowerCase();
+        if (!requestRateLimiter.tryAcquire("login:" + emailKey, 8, Duration.ofMinutes(10))) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                "Demasiados intentos de inicio de sesión. Intenta nuevamente en unos minutos.");
+        }
         
         User user = userRepository.findByEmail(body.email())
             .orElseThrow(() -> {
                 log.warn("❌ Usuario no encontrado: {}", body.email());
-                return new RuntimeException("Credenciales inválidas");
+                return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
             });
 
         String passwordHash = user.getPasswordHash();
         if (passwordHash == null || passwordHash.isBlank() || !passwordEncoder.matches(body.password(), passwordHash)) {
             log.warn("❌ Contraseña inválida para: {}", body.email());
-            throw new RuntimeException("Credenciales inválidas");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
         }
 
         String token = jwtService.generateToken(user);
@@ -88,6 +100,12 @@ public class AuthController {
     @PostMapping("/otp/request")
     public ResponseEntity<Map<String, Object>> requestOtp(@Valid @RequestBody OtpRequestDto body) {
         log.info("📱 OTP request para teléfono: {}", body.phone());
+
+        String phoneKey = body.phone() == null ? "" : body.phone().trim();
+        if (!requestRateLimiter.tryAcquire("otp:" + phoneKey, 3, Duration.ofMinutes(5))) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                "Se alcanzó el límite de solicitudes OTP. Intenta nuevamente en unos minutos.");
+        }
         
         try {
             String otpToken = otpService.generateOtpToken(body.phone());
@@ -156,7 +174,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
-            throw new RuntimeException("Authenticated user required");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user required");
         }
 
         UserDto user = userService.getById(principal.getId());

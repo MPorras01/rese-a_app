@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.resenias.reviews.dto.MyReviewSummaryDto;
 import com.resenias.reviews.dto.ReviewCreateDto;
 import com.resenias.reviews.dto.ReviewSummaryDto;
 import com.resenias.reviews.repository.ReviewRepository;
@@ -57,56 +57,47 @@ public class ReviewController {
         return ResponseEntity.ok(reviews);
     }
 
-    @PostMapping
-    public ResponseEntity<ReviewSummaryDto> createReview(
-        @AuthenticationPrincipal UserPrincipal principal,
-        @Valid @RequestBody ReviewCreateDto dto) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        ReviewSummaryDto created = reviewService.createReview(principal.getId(), dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReview(
-        @PathVariable UUID id,
-        @AuthenticationPrincipal UserPrincipal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        reviewService.deleteReview(id, principal.getId());
-        return ResponseEntity.noContent().build();
-    }
-
     @GetMapping("/mine")
-    public ResponseEntity<Page<MyReviewDto>> myReviews(
-        @AuthenticationPrincipal UserPrincipal principal,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<MyReviewSummaryDto>> listMine(@AuthenticationPrincipal UserPrincipal principal,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(401).build();
         }
+
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<MyReviewDto> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(principal.getId(), pageable)
-            .map(review -> new MyReviewDto(
+        Page<MyReviewSummaryDto> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(principal.getId(), pageable)
+            .map(review -> new MyReviewSummaryDto(
                 review.getId(),
                 review.getBusiness() == null ? null : review.getBusiness().getId(),
                 review.getBusiness() == null ? "Negocio" : review.getBusiness().getName(),
                 review.getRating() == null ? 0 : review.getRating(),
                 review.getBody(),
                 review.getCreatedAt()));
+
         return ResponseEntity.ok(reviews);
     }
 
-    record MyReviewDto(
-        java.util.UUID id,
-        java.util.UUID businessId,
-        String businessName,
-        double rating,
-        String body,
-        java.time.OffsetDateTime createdAt
-    ) {}
+    @PostMapping
+    public ResponseEntity<ReviewSummaryDto> createReview(@AuthenticationPrincipal UserPrincipal principal,
+                                                         @Valid @RequestBody ReviewCreateDto body) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(reviewService.createReview(principal.getId(), body));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReview(@AuthenticationPrincipal UserPrincipal principal,
+                                             @PathVariable UUID id) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        reviewService.deleteReview(id, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats(@RequestParam UUID businessId) {
