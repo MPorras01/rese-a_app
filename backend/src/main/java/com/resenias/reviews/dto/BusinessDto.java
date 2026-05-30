@@ -21,6 +21,8 @@ public record BusinessDto(
     String rejectionReason,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt,
-    Double avgRating
+    Double avgRating,
+    Double lat,
+    Double lng
 ) {
 }

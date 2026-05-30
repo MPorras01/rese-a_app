@@ -1,0 +1,6 @@
+backend/
+.github/
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+.git/
