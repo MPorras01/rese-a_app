@@ -9,6 +9,7 @@ public record ReviewSummaryDto(
     String userName,
     double rating,
     String body,
+    String[] photos,
     OffsetDateTime createdAt
 ) {
 }

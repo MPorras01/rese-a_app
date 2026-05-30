@@ -34,6 +34,7 @@ export interface ReviewDto {
   userName?: string;
   rating: number;
   body: string;
+  photos?: string[];
   createdAt: string;
 }
 

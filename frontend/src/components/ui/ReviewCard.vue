@@ -9,6 +9,15 @@
       <div class="stars">{{ stars }}</div>
     </div>
     <p class="body">{{ review.body }}</p>
+    <div v-if="review.photos && review.photos.length > 0" class="photo-grid">
+      <img
+        v-for="(photo, index) in review.photos"
+        :key="`${review.id}-photo-${index}`"
+        :src="photo"
+        :alt="`Foto de la reseña ${index + 1}`"
+        loading="lazy"
+      >
+    </div>
   </article>
 </template>
 
@@ -79,5 +88,25 @@ const formattedDate = computed(() => {
   font-size: 0.88rem;
   color: #334155;
   line-height: 1.55;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.photo-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 420px) {
+  .photo-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

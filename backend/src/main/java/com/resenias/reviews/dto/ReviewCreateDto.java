@@ -1,6 +1,7 @@
 package com.resenias.reviews.dto;
 
 import java.util.UUID;
+import java.util.List;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -21,6 +22,9 @@ public record ReviewCreateDto(
 
     @NotBlank(message = "body es requerido")
     @Size(min = 10, max = 2000, message = "body debe tener entre 10 y 2000 caracteres")
-    String body
+    String body,
+
+    @Size(max = 4, message = "Se permiten hasta 4 fotos por reseña")
+    List<@Size(max = 350000, message = "Cada foto es demasiado grande") String> photos
 ) {
 }

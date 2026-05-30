@@ -52,6 +52,7 @@ public class ReviewController {
                 review.getUser() == null ? "Usuario" : review.getUser().getName(),
                 review.getRating() == null ? 0 : review.getRating(),
                 review.getBody(),
+                review.getPhotos(),
                 review.getCreatedAt()));
 
         return ResponseEntity.ok(reviews);

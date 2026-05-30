@@ -1,6 +1,7 @@
 package com.resenias.reviews.service;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -75,6 +76,7 @@ public class ReviewService {
             .product(product)
             .rating(dto.rating())
             .body(dto.body())
+            .photos(normalizePhotos(dto.photos()))
             .status(Review.ReviewStatus.ACTIVE)
             .build();
 
@@ -86,8 +88,20 @@ public class ReviewService {
             author.getName(),
             saved.getRating() == null ? 0 : saved.getRating(),
             saved.getBody(),
+            saved.getPhotos(),
             saved.getCreatedAt()
         );
+    }
+
+    private String[] normalizePhotos(List<String> photos) {
+        if (photos == null || photos.isEmpty()) {
+            return new String[0];
+        }
+
+        return photos.stream()
+            .filter(value -> value != null && !value.isBlank())
+            .map(String::trim)
+            .toArray(String[]::new);
     }
 
     @Transactional
