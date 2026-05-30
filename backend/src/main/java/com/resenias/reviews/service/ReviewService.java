@@ -2,9 +2,11 @@ package com.resenias.reviews.service;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.resenias.reviews.dto.ReviewCreateDto;
 import com.resenias.reviews.dto.ReviewSummaryDto;
@@ -38,17 +40,17 @@ public class ReviewService {
     @Transactional
     public ReviewSummaryDto createReview(UUID authorId, ReviewCreateDto dto) {
         User author = userRepository.findById(authorId)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         if (author.getStatus() != User.UserStatus.ACTIVE) {
             throw new AccessDeniedException("Tu cuenta debe estar activa para escribir reseñas");
         }
 
         Business business = businessRepository.findById(dto.businessId())
-            .orElseThrow(() -> new RuntimeException("Negocio no encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Negocio no encontrado"));
 
         if (business.getStatus() != Business.BusinessStatus.APPROVED) {
-            throw new RuntimeException("Solo se pueden reseñar negocios aprobados");
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Solo se pueden reseñar negocios aprobados");
         }
 
         // Evitar reseñas duplicadas del mismo usuario al mismo negocio
@@ -59,11 +61,11 @@ public class ReviewService {
         Product product = null;
         if (dto.productId() != null) {
             product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
 
             // Verificar que el producto pertenece al negocio
             if (!product.getBusiness().getId().equals(dto.businessId())) {
-                throw new RuntimeException("El producto no pertenece a este negocio");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El producto no pertenece a este negocio");
             }
         }
 
@@ -91,10 +93,10 @@ public class ReviewService {
     @Transactional
     public void deleteReview(UUID reviewId, UUID requesterId) {
         Review review = reviewRepository.findById(reviewId)
-            .orElseThrow(() -> new RuntimeException("Reseña no encontrada"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reseña no encontrada"));
 
         User requester = userRepository.findById(requesterId)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         boolean isAuthor = review.getUser() != null && review.getUser().getId().equals(requesterId);
         boolean isAdmin = requester.getRole() == User.Role.ADMIN;
