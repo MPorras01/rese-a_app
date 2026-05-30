@@ -36,7 +36,7 @@
             <li v-if="biz.email"><strong>Email:</strong> {{ biz.email }}</li>
             <li v-if="biz.website">
               <strong>Web:</strong>
-              <a :href="biz.website" target="_blank" rel="noreferrer">{{ biz.website }}</a>
+              <a :href="biz.website?.startsWith('http') ? biz.website : '#'" target="_blank" rel="noreferrer noopener">{{ biz.website }}</a>
             </li>
             <li><strong>Propietario:</strong> {{ biz.ownerName }}</li>
             <li><strong>Registrado:</strong> {{ formatDate(biz.createdAt) }}</li>
