@@ -101,7 +101,8 @@ public class ReviewController {
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats(@RequestParam UUID businessId) {
-        double avgRating = reviewRepository.avgRating(businessId) == null ? 0 : reviewRepository.avgRating(businessId);
+        Double rawAvg = reviewRepository.avgRating(businessId);
+        double avgRating = rawAvg == null ? 0 : rawAvg;
         long totalReviews = reviewRepository.findByBusinessIdOrderByCreatedAtDesc(businessId, PageRequest.of(0, 1)).getTotalElements();
         Map<String, Long> distribution = reviewRepository.countByRating(businessId).entrySet().stream()
             .collect(java.util.stream.Collectors.toMap(

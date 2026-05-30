@@ -60,7 +60,7 @@ public class BusinessController {
 
         return businessService.getMyBusiness(principal.getId())
             .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.ok(null));
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
