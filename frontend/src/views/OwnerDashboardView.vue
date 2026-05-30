@@ -60,7 +60,7 @@
         </article>
         <article class="stat-card">
           <h3>Rating promedio</h3>
-          <p>{{ reviewStats.avgRating.toFixed(1) }}</p>
+          <p>{{ (reviewStats.avgRating ?? 0).toFixed(1) }}</p>
         </article>
         <article class="stat-card">
           <h3>Distribucion 1-5</h3>

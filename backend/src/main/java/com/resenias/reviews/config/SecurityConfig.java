@@ -49,11 +49,13 @@ public class SecurityConfig {
                     "/favicon.ico", "/vite.svg",
                     "/explore", "/business/**", "/login", "/oauth2/callback",
                     "/verify-phone", "/profile", "/profile/**",
-                    "/owner/**", "/admin").permitAll()
+                    "/owner/**", "/admin", "/admin/**").permitAll()
                 // API pública (GET)
                 .requestMatchers(HttpMethod.GET, "/api/businesses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/stats").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/mine").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/reviews").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
                 // API de autenticación
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
@@ -63,8 +65,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/businesses/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()
-                // Uploads
-                .requestMatchers("/api/upload/**").permitAll()
+                // Uploads requieren autenticación
+                .requestMatchers("/api/upload/**").authenticated()
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Todo lo demás requiere autenticación

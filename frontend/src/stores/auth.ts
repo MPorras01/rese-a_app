@@ -60,7 +60,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function handleOAuthCallback(newToken: string): Promise<void> {
     token.value = newToken;
-    await fetchMe();
+    try {
+      await fetchMe();
+    } catch (err) {
+      token.value = null;
+      throw err;
+    }
     await router.push('/');
   }
 
@@ -120,7 +125,6 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null;
     otpToken.value = null;
     token.value = null;
-    localStorage.removeItem('token');
     void router.push('/');
   }
 
