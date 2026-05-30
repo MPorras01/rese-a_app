@@ -1,0 +1,75 @@
+# ─── Perfil LOCAL para desarrollo con hot-reload ───────────────────────────────
+# Conecta al PostgreSQL levantado con: docker compose up -d db
+# No requiere variables de entorno; todos los valores están hardcodeados para dev.
+
+app:
+  frontend-url: http://localhost:5173
+  seed-admin:
+    enabled: true
+    email: admin@resena.local
+    password: Admin12345!
+    name: Administrador Demo
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/resenias
+    username: resenias
+    password: resenias123
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: placeholder-not-real
+            client-secret: placeholder-not-real
+            scope: openid,email,profile
+          facebook:
+            client-id: placeholder-not-real
+            client-secret: placeholder-not-real
+            scope: email,public_profile
+
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 1s
+      quiet-period: 400ms
+    livereload:
+      enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 16MB
+
+server:
+  port: 8080
+
+jwt:
+  secret: dev-local-jwt-secret-key-minimum-32-chars-here!!
+
+otp:
+  jwt:
+    secret: 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+
+r2:
+  account-id: placeholder
+  access-key: placeholder
+  secret-key: placeholder
+  bucket: placeholder
+  public-url: http://localhost:8080
+
+twilio:
+  account-sid:
+  auth-token:
+  from-phone:
+
+logging:
+  level:
+    com.resenias: DEBUG
+    org.springframework.security: WARN

@@ -16,6 +16,8 @@ export interface BusinessDto {
   updatedAt: string;
   avgRating: number | null;
   totalReviews?: number;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface ProductDto {
