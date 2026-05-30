@@ -1,0 +1,80 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:  # permite ejecutar manualmente desde GitHub UI
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. Configurar Docker Buildx (builds más rápidos)
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Build de la imagen Docker
+      - name: Build imagen
+        run: |
+          docker build -t reseniaapp:latest .
+
+      # 4. Guardar imagen como tar
+      - name: Exportar imagen
+        run: |
+          docker save reseniaapp:latest | gzip > reseniaapp.tar.gz
+
+      # 5. Copiar imagen al servidor EC2
+      - name: Copiar imagen a EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          source: "reseniaapp.tar.gz,docker-compose.aws.yml,scripts/aws-deploy.sh"
+          target: "/home/ec2-user/reseniaapp"
+
+      # 6. Deploy en EC2
+      - name: Deploy en EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_EC2_IP }}
+          username: ec2-user
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/ec2-user/reseniaapp
+
+            echo "📦 Cargando imagen Docker..."
+            docker load < reseniaapp.tar.gz
+
+            echo "🔄 Reiniciando contenedor..."
+            docker compose -f docker-compose.aws.yml up -d --force-recreate
+
+            echo "⏳ Esperando health check..."
+            for i in $(seq 1 24); do
+              if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "✅ App lista"
+                break
+              fi
+              echo "   Intento $i/24..."
+              sleep 5
+            done
+
+            echo "🧹 Limpiando imágenes antiguas..."
+            docker image prune -f
+
+            echo "✅ Deploy completado"
+
+      # 7. Verificar que la app responde
+      - name: Verificar deploy
+        run: |
+          sleep 10
+          curl -sf "http://${{ secrets.AWS_EC2_IP }}/actuator/health" || \
+            (echo "❌ Health check falló" && exit 1)
+          echo "✅ App respondiendo correctamente"

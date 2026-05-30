@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,15 +28,18 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final BusinessMapper businessMapper;
+    private final GeocodingService geocodingService;
 
     public BusinessService(BusinessRepository businessRepository,
                            UserRepository userRepository,
                            ReviewRepository reviewRepository,
-                           BusinessMapper businessMapper) {
+                           BusinessMapper businessMapper,
+                           GeocodingService geocodingService) {
         this.businessRepository = businessRepository;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.businessMapper = businessMapper;
+        this.geocodingService = geocodingService;
     }
 
     @Transactional
@@ -60,6 +64,9 @@ public class BusinessService {
             .website(dto.website())
             .status(Business.BusinessStatus.PENDING)
             .build();
+
+        // Geocodificar dirección con Nominatim (OpenStreetMap) — asíncrono
+        applyCoordinates(business, dto.address(), dto.city());
 
         Business saved = businessRepository.save(business);
         return toDto(saved);
@@ -91,11 +98,8 @@ public class BusinessService {
 
     @Transactional(readOnly = true)
     public Page<BusinessDto> findApproved(String search, String city, String category, Pageable pageable) {
-        String searchValue = normalize(search);
-        String cityValue = normalize(city);
-        String categoryValue = normalize(category);
-
-        return businessRepository.findApprovedWithFilters(searchValue, cityValue, categoryValue, pageable)
+        return businessRepository
+            .findApprovedWithFilters(normalize(search), normalize(city), normalize(category), pageable)
             .map(this::toDto);
     }
 
@@ -130,6 +134,9 @@ public class BusinessService {
             throw new AccessDeniedException("Only owner can update business");
         }
 
+        boolean addressChanged = !equals(business.getAddress(), dto.address())
+            || !equals(business.getCity(), dto.city());
+
         business.setName(dto.name());
         business.setDescription(dto.description());
         business.setCategory(dto.category());
@@ -138,6 +145,11 @@ public class BusinessService {
         business.setPhone(dto.phone());
         business.setEmail(dto.email());
         business.setWebsite(dto.website());
+
+        // Re-geocodificar solo si cambió la dirección
+        if (addressChanged) {
+            applyCoordinates(business, dto.address(), dto.city());
+        }
 
         return toDto(businessRepository.save(business));
     }
@@ -152,6 +164,20 @@ public class BusinessService {
     public Optional<BusinessDto> getMyBusiness(UUID ownerId) {
         return businessRepository.findFirstByOwnerIdOrderByCreatedAtDesc(ownerId)
             .map(this::toDto);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private void applyCoordinates(Business business, String address, String city) {
+        try {
+            double[] coords = geocodingService.geocode(address, city);
+            if (coords != null) {
+                business.setLat(coords[0]);
+                business.setLng(coords[1]);
+            }
+        } catch (Exception e) {
+            // No bloquear el guardado si falla la geocodificación
+        }
     }
 
     private BusinessDto toDto(Business business) {
@@ -174,14 +200,19 @@ public class BusinessService {
             dto.rejectionReason(),
             dto.createdAt(),
             dto.updatedAt(),
-            avgRating
+            avgRating,
+            business.getLat(),
+            business.getLng()
         );
     }
 
     private String normalize(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
+        return (value == null || value.isBlank()) ? "" : value.trim();
+    }
+
+    private boolean equals(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
     }
 }

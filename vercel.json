@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_API_URL": "@resena_api_url"
+  },
+  "envPrefix": "VITE_",
+  "regions": ["iad1"],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "master": true,
+      "develop": true,
+      "release": true
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "status": 200
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1",
+      "cache": {
+        "maxAge": 31536000
+      }
+    }
+  ],
+  "functions": {
+    "frontend/**.html": {
+      "maxDuration": 10
+    }
+  },
+  "redirects": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://@resena_api_url/api/:path*"
+    }
+  ]
+}

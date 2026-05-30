@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL para producción
+  postgres:
+    image: postgres:16-alpine
+    container_name: resena-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-resena}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-resena_db}
+      POSTGRES_INITDB_ARGS: "-c max_connections=200 -c shared_buffers=256MB"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-resena} -d ${DB_NAME:-resena_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - resena-network
+    security_opt:
+      - no-new-privileges:true
+
+  # Aplicación Spring Boot
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resena-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-resena_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-resena}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-changeme}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES:-docker,prod}
+      
+      # Server
+      SERVER_PORT: ${APP_PORT:-8080}
+      SERVER_SERVLET_CONTEXT_PATH: /
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400}
+      
+      # OAuth2
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET}
+      
+      # Frontend URL
+      APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOG_LEVEL:-INFO}
+      LOGGING_LEVEL_COM_RESENIAS: DEBUG
+      
+      # Actuator
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: when-authorized
+    ports:
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:${APP_PORT:-8080}/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - resena-network
+    security_opt:
+      - no-new-privileges:true
+    # Límites de recursos (opcional, para Dokploy)
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-2}'
+          memory: ${MEMORY_LIMIT:-1024M}
+        reservations:
+          cpus: '${CPU_REQUEST:-500m}'
+          memory: ${MEMORY_REQUEST:-512M}
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  resena-network:
+    driver: bridge
