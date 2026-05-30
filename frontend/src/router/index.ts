@@ -79,7 +79,8 @@ router.beforeEach((to, _from, next) => {
 
   if (
     auth.isAuthenticated &&
-    auth.user?.status !== 'ACTIVE' &&
+    auth.user !== null &&
+    auth.user.status !== 'ACTIVE' &&
     to.path !== '/verify-phone' &&
     to.path !== '/login' &&
     to.path !== '/oauth2/callback'
