@@ -63,7 +63,7 @@ services:
       
       # Logging
       LOGGING_LEVEL_ROOT: ${LOG_LEVEL:-INFO}
-      LOGGING_LEVEL_COM_RESENIAS: DEBUG
+      LOGGING_LEVEL_COM_RESENIAS: ${LOG_LEVEL_APP:-INFO}
       
       # Actuator
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics

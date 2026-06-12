@@ -44,6 +44,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Health checks (sin autenticación para Docker/Dokploy)
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                .requestMatchers("/actuator/info").permitAll()
                 // Recursos estáticos del SPA (frontend embebido en el JAR)
                 .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**",
                     "/favicon.ico", "/vite.svg",

@@ -4,6 +4,7 @@
   "installCommand": "npm ci",
   "framework": "vite",
   "outputDirectory": "dist",
+  "rootDirectory": "frontend",
   "env": {
     "VITE_API_URL": "@resena_api_url"
   },

@@ -32,7 +32,7 @@ jobs:
       - name: Build Backend with Maven
         run: |
           cd backend
-          mvn clean package -DskipTests -Dskip.frontend=true
+          mvn clean package -DskipTests -DskipFrontend=true
 
       - name: Run Backend Tests
         run: |

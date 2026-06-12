@@ -5,12 +5,13 @@ on:
     types: [closed]
     branches:
       - master
+      - release
   workflow_dispatch:
     inputs:
       environment:
         description: 'Deployment environment'
         required: true
-        default: 'staging'
+        default: 'production'
         type: choice
         options:
           - staging
@@ -22,16 +23,34 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' || 
-      (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'master')
+      (github.event.pull_request.merged == true && 
+       (github.event.pull_request.base.ref == 'master' && github.event.pull_request.head.ref == 'release' ||
+        github.event.pull_request.base.ref == 'release'))
 
     environment:
-      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}
+      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || (github.event.pull_request.base.ref == 'master' && 'production' || 'staging') }}
       url: ${{ secrets.DOKPLOY_URL }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Determine Branch and Environment
+        id: deploy-info
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+            BRANCH="${ENV}_branch"
+          elif [ "${{ github.event.pull_request.base.ref }}" == "master" ]; then
+            ENV="production"
+            BRANCH="master"
+          else
+            ENV="staging"
+            BRANCH="release"
+          fi
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
 
       - name: Get Version
         id: version
@@ -44,27 +63,33 @@ jobs:
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.DOKPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "appId": "${{ secrets.DOKPLOY_APP_ID }}",
-              "gitBranch": "master",
-              "gitCommit": "${{ github.sha }}",
-              "version": "${{ steps.version.outputs.version }}"
-            }' \
+            -d "{
+              \"appId\": \"${{ secrets.DOKPLOY_APP_ID }}\",
+              \"gitBranch\": \"${{ steps.deploy-info.outputs.branch }}\",
+              \"gitCommit\": \"${{ github.sha }}\",
+              \"version\": \"${{ steps.version.outputs.version }}\",
+              \"environment\": \"${{ steps.deploy-info.outputs.environment }}\"
+            }" \
             "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
 
       - name: Verify Deployment
         run: |
-          echo "Deployment initiated to Dokploy"
+          echo "✅ Deployment initiated to Dokploy"
+          echo "Environment: ${{ steps.deploy-info.outputs.environment }}"
+          echo "Branch: ${{ steps.deploy-info.outputs.branch }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
           echo "Monitor progress at: ${{ secrets.DOKPLOY_URL }}"
 
       - name: Create Deployment Record
         uses: actions/github-script@v7
+        if: success()
         with:
           script: |
             github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: context.ref,
-              environment: '${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}',
-              description: 'Deployment to Dokploy - v${{ steps.version.outputs.version }}'
+              environment: '${{ steps.deploy-info.outputs.environment }}',
+              description: 'Dokploy Deploy - ${{ steps.deploy-info.outputs.environment }} - v${{ steps.version.outputs.version }}',
+              auto_merge: false
             });

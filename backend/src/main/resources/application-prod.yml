@@ -82,7 +82,7 @@ management:
     health:
       show-details: when-authorized
     shutdown:
-      enabled: true
+      enabled: false
 
 logging:
   level:
